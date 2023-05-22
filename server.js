@@ -1,7 +1,7 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const table = require('console.table');
-const utils = require('util');
+const util = require('util');
 
  // connecting to database
 const connection = mysql.createConnection({
@@ -55,7 +55,11 @@ const connection = mysql.createConnection({
            case 'Update an employee role':
                 updateEmployeeRoleList();
                 break;
-                
+
+                case 'Update an employee manager':
+                    updateManagerList();
+                    break;
+
                 case 'Delete departments':
                     deleteDepartmentsList();
                     break;
@@ -252,3 +256,33 @@ db.query(`SELECT * FROM department`, (err, result) => {
         });
         });
     }
+
+    function updateManager() {
+        inquirer.prompt([
+            {
+                 name: "first_name",
+                 type: "input",
+                 message: "please enter the first name of the employee you want to update in the database",
+            },
+            {
+                name: "manager_id",
+                type: "input", 
+                message: "please enter the id of the manager you want to update in the database",
+            }
+        ]).then (function(response) {
+            db.query("UPDATE employee SET manager_id = ? WHERE first_name = ?", [response.manager_id, response.first_name], function(err, result) {
+                if (err) throw err;
+                console.log('The manager has been successfully updated');
+                db.query(`SELECT * FROM employee`, (err, result) => {
+                    if (err) {
+                        res.status(500).send({err: err.message})
+                        startPrompt();
+                    }
+                    console.table(result);
+                    startPrompt();
+                });               
+        });
+    });
+       
+}
+            startPrompt();
