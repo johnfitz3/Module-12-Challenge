@@ -3,80 +3,74 @@ const mysql = require('mysql2');
 const table = require('console.table');
 const util = require('util');
 
- // connecting to database
 const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: process.env.MYSQL_PASSWORD ,
-    database: 'employee_db'
+  host: 'localhost',
+  user: 'root',
+  password: process.env.MYSQL_PASSWORD,
+  database: 'employee_db'
+});
+
+const db = util.promisify(connection.query).bind(connection);
+
+connection.connect(err => {
+  if (err) throw err;
+  startPrompt();
+});
+
+function startPrompt() {
+  inquirer.prompt({
+    type: 'list',
+    name: 'mainMenu',
+    message: 'What would you like to do?',
+    choices: ['View Departments', 'View Roles', 'View Employees', 'Add Department', 'Add Role', 'Add An Employee', 'Update Employee Role', 'Update Employee Manager', 'Delete Department', 'Delete Role', 'Delete Employee'],
+  }).then(answer => {
+    switch (answer.mainMenu) {
+      case 'View Departments':
+        viewDepartmentsList();
+        break;
+
+      case 'View Roles':
+        viewRolesList();
+        break;
+
+      case 'View Employees':
+        viewEmployees();
+        break;
+
+      case 'Add Department':
+        addDepartment();
+        break;
+
+      case 'Add Role':
+        addRole();
+        break;
+
+      case 'Add An Employee':
+        addEmployee();
+        break;
+
+      case 'Update Employee Role':
+        updateRole();
+        break;
+
+      case 'Update Employee Manager':
+        updateManager();
+        break;
+
+      case 'Delete Department':
+        deleteDepartmentsList();
+        break;
+
+      case 'Delete Role':
+        deleteRolesList();
+        break;
+
+      case 'Delete Employee':
+        deleteEmployeesList();
+        break;
+    }
   });
-  
-  const db = util.promisify(connection.query).bind(connection);
-
- 
-  connection.connect(err => {
-      if (err) throw err;
-      startPrompt();
-  });
-
-  //main menue
-  function startPrompt() {
-    inquirer.prompt({
-            type: 'list',
-            name: 'mainMenu',
-            message: 'What would you like to do?',
-            choices: ['View Departments', 'View Roles', 'View Employees', 'Add Department', 'Add Role', 'Add An Employee', 'Update Employee Role', 'Update Employee Manager', 'Delete Department', 'Delete Role', 'Delete Employee'],
-    }) .then(answer => {
-        switch (answer.mainMenu) {
-            case 'View departments':
-                viewDepartmentsList();
-                break;
-                
-                case 'View roles':
-                    viewRolesList();
-                    break;
-
-                    case 'View employees':
-                        viewEmployeesList();
-                        break;
-             
-            case 'Add a department':
-                addDepartmentList();
-                break;
-                
-                case 'Add a role':
-                    addRoleList();
-                    break;
-                    
-                    case 'Add an employee':
-                        addEmployeeList();
-                        break;
-
-           case 'Update an employee role':
-                updateEmployeeRoleList();
-                break;
-
-                case 'Update an employee manager':
-                    updateManagerList();
-                    break;
-
-                case 'Delete departments':
-                    deleteDepartmentsList();
-                    break;
-
-                    case 'Delete roles':
-                        deleteRolesList();
-                        break;
-
-            case 'Delete employees':
-                    deleteEmployeesList();
-                    break;
-                    
-        }   
-
-    })
-};          
-
+}
 //view department
 function viewDepartmentsList() {
     const sql = `SELECT * FROM department`;
@@ -228,6 +222,7 @@ db.query(`SELECT * FROM department`, (err, result) => {
     });
     }
 
+    //update role
     function updateRole() {
         inquirer.prompt([
             {
@@ -257,6 +252,7 @@ db.query(`SELECT * FROM department`, (err, result) => {
         });
     }
 
+    //update manager role
     function updateManager() {
         inquirer.prompt([
             {
@@ -283,6 +279,92 @@ db.query(`SELECT * FROM department`, (err, result) => {
                 });               
         });
     });
-       
+    
+    //delete department
+    function deleteDepartmentsList() {
+        inquirer
+          .prompt([
+            {
+              name: "department_id",
+              type: "number",
+              message: "Please enter the ID of the department you want to delete:",
+            },
+          ])
+          .then((answer) => {
+            const sql = "DELETE FROM department WHERE id = ?";
+            const params = [answer.department_id];
+            db.query(sql, params, (err, result) => {
+              if (err) throw err;
+              console.log("The department has been deleted successfully.");
+      
+              db.query("SELECT * FROM department", (err, result) => {
+                if (err) {
+                  console.error(err);
+                  startPrompt();
+                }
+                console.table(result);
+                startPrompt();
+              });
+            });
+          });
+      }
+      
+      // delete role
+      function deleteRolesList() {
+        inquirer
+          .prompt([
+            {
+              name: "role_id",
+              type: "number",
+              message: "Please enter the ID of the role you want to delete:",
+            },
+          ])
+          .then((answer) => {
+            const sql = "DELETE FROM role WHERE id = ?";
+            const params = [answer.role_id];
+            db.query(sql, params, (err, result) => {
+              if (err) throw err;
+              console.log("The role has been deleted successfully.");
+      
+              db.query("SELECT * FROM role", (err, result) => {
+                if (err) {
+                  console.error(err);
+                  startPrompt();
+                }
+                console.table(result);
+                startPrompt();
+              });
+            });
+          });
+      }
+      
+      // delete employee
+      function deleteEmployeesList() {
+        inquirer
+          .prompt([
+            {
+              name: "employee_id",
+              type: "number",
+              message: "Please enter the ID of the employee you want to delete:",
+            },
+          ])
+          .then((answer) => {
+            const sql = "DELETE FROM employee WHERE id = ?";
+            const params = [answer.employee_id];
+            db.query(sql, params, (err, result) => {
+              if (err) throw err;
+              console.log("The employee has been deleted successfully.");
+      
+              db.query("SELECT * FROM employee", (err, result) => {
+                if (err) {
+                  console.error(err);
+                  startPrompt();
+                }
+                console.table(result);
+                startPrompt();
+              });
+            });
+          });
+      }
 }
             startPrompt();
